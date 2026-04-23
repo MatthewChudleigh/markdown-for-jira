@@ -79,6 +79,24 @@ tasks:
       - npm run test:watch
 
   # ---------------------------------------------------------------------------
+  # Manifest
+  # ---------------------------------------------------------------------------
+
+  manifest:
+    desc: Generate manifest.yml from manifest.yml.tpl (requires FORGE_APP_ID)
+    sources:
+      - manifest.yml.tpl
+    generates:
+      - manifest.yml
+    cmds:
+      - |
+        if [ -z "${FORGE_APP_ID}" ]; then
+          echo "FORGE_APP_ID environment variable must be set" >&2
+          exit 1
+        fi
+        sed "s|<FORGE_APP_ID>|${FORGE_APP_ID}|g" manifest.yml.tpl > manifest.yml
+
+  # ---------------------------------------------------------------------------
   # Build
   # ---------------------------------------------------------------------------
 
@@ -98,7 +116,7 @@ tasks:
 
   build:
     desc: Build the entire project
-    deps: [build:panel]
+    deps: [build:panel, manifest]
 
   # ---------------------------------------------------------------------------
   # Develop
@@ -114,7 +132,7 @@ tasks:
 
   dev:
     desc: Run Forge tunnel against the local panel dev server
-    deps: [install]
+    deps: [install, manifest]
     interactive: true
     cmds:
       - forge tunnel
@@ -151,18 +169,22 @@ tasks:
       - forge deploy -e production
 
   install:forge:
-    desc: Install the Forge app onto a Jira site (SITE=your-site.atlassian.net)
+    desc: Install the Forge app onto a Jira site (SITE=your-site.atlassian.net, ENV=production)
     requires:
       vars: [SITE]
+    vars:
+      ENV: '{{.ENV | default "production"}}'
     cmds:
-      - forge install --site {{.SITE}} --product jira
+      - forge install --site {{.SITE}} --product jira -e {{.ENV}}
 
   upgrade:forge:
-    desc: Upgrade the installed Forge app on a site (SITE=your-site.atlassian.net)
+    desc: Upgrade the installed Forge app on a site (SITE=your-site.atlassian.net, ENV=production)
     requires:
       vars: [SITE]
+    vars:
+      ENV: '{{.ENV | default "production"}}'
     cmds:
-      - forge install --upgrade --site {{.SITE}} --product jira
+      - forge install --upgrade --site {{.SITE}} --product jira -e {{.ENV}}
 
   # ---------------------------------------------------------------------------
   # Operations
@@ -182,6 +204,7 @@ tasks:
     desc: Remove build artifacts
     cmds:
       - rm -rf {{.PANEL_DIST}}
+      - rm -f manifest.yml
 
   clean:all:
     desc: Remove build artifacts and all node_modules

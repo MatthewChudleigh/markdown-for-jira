@@ -44,8 +44,6 @@ export default function App() {
 
   useEffect(() => {
     loadList();
-    // intentional: only on mount; Refresh button re-invokes loadList.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

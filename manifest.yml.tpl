@@ -4,7 +4,8 @@ modules:
       resource: main
       resolver:
         function: resolver
-      title: Markdown attachments
+      title: Markdown attachments                                                                                                                                                                             
+      label: Markdown attachments   
       icon: https://developer.atlassian.com/platform/forge/images/icons/issue-panel-icon.svg
   function:
     - key: resolver
@@ -18,8 +19,8 @@ resources:
 
 app:
   runtime:
-    name: nodejs20.x
-  id: ari:cloud:ecosystem::app/REPLACE_WITH_APP_ID
+    name: nodejs22.x
+  id: ari:cloud:ecosystem::app/<FORGE_APP_ID>
 
 permissions:
   scopes:
