@@ -1,0 +1,35 @@
+{
+  "name": "markdown-for-jira",
+  "version": "0.1.0",
+  "description": "Render markdown attachments inline on Jira Cloud issues.",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": "20.x"
+  },
+  "main": "src/index.js",
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "npm run build --prefix static/panel",
+    "dev": "npm run dev --prefix static/panel"
+  },
+  "dependencies": {
+    "@forge/api": "^4.0.0",
+    "@forge/resolver": "^1.6.0"
+  },
+  "devDependencies": {
+    "dompurify": "^3.0.11",
+    "eslint": "^8.57.0",
+    "highlight.js": "^11.9.0",
+    "jsdom": "^24.0.0",
+    "markdown-it": "^14.1.0",
+    "markdown-it-anchor": "^8.6.7",
+    "markdown-it-emoji": "^3.0.0",
+    "markdown-it-task-lists": "^2.1.1",
+    "prettier": "^3.2.5",
+    "vitest": "^4.1.5"
+  }
+}

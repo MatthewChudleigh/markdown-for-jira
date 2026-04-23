@@ -1,0 +1,190 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+vars:
+  PANEL_DIR: static/panel
+  PANEL_DIST: '{{.PANEL_DIR}}/dist'
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+    silent: true
+
+  # ---------------------------------------------------------------------------
+  # Dependencies
+  # ---------------------------------------------------------------------------
+
+  install:
+    desc: Install root npm dependencies
+    deps: [install:panel]
+    sources:
+      - package.json
+      - package-lock.json
+    generates:
+      - node_modules/.package-lock.json
+    cmds:
+      - npm install
+
+  install:panel:
+    desc: Install panel npm dependencies
+    dir: '{{.PANEL_DIR}}'
+    sources:
+      - package.json
+      - package-lock.json
+    generates:
+      - node_modules/.package-lock.json
+    cmds:
+      - npm install
+
+  # ---------------------------------------------------------------------------
+  # Code quality
+  # ---------------------------------------------------------------------------
+
+  format:
+    desc: Format all files with Prettier
+    deps: [install]
+    cmds:
+      - npm run format
+
+  lint:
+    desc: Lint with ESLint
+    deps: [install]
+    sources:
+      - .eslintrc.cjs
+      - src/**/*.js
+      - '{{.PANEL_DIR}}/src/**/*.{js,jsx}'
+      - test/**/*.js
+    cmds:
+      - npm run lint
+
+  test:
+    desc: Run unit tests once
+    deps: [install]
+    sources:
+      - vitest.config.js
+      - src/**/*.js
+      - test/**/*.js
+      - test/fixtures/**/*
+    cmds:
+      - npm test
+
+  test:watch:
+    desc: Run unit tests in watch mode
+    deps: [install]
+    interactive: true
+    cmds:
+      - npm run test:watch
+
+  # ---------------------------------------------------------------------------
+  # Build
+  # ---------------------------------------------------------------------------
+
+  build:panel:
+    desc: Build the Forge custom UI panel (Vite)
+    deps: [install:panel]
+    dir: '{{.PANEL_DIR}}'
+    sources:
+      - package.json
+      - vite.config.js
+      - index.html
+      - src/**/*
+    generates:
+      - dist/**/*
+    cmds:
+      - npm run build
+
+  build:
+    desc: Build the entire project
+    deps: [build:panel]
+
+  # ---------------------------------------------------------------------------
+  # Develop
+  # ---------------------------------------------------------------------------
+
+  dev:panel:
+    desc: Run the panel Vite dev server (for forge tunnel)
+    deps: [install:panel]
+    dir: '{{.PANEL_DIR}}'
+    interactive: true
+    cmds:
+      - npm run dev
+
+  dev:
+    desc: Run Forge tunnel against the local panel dev server
+    deps: [install]
+    interactive: true
+    cmds:
+      - forge tunnel
+
+  # ---------------------------------------------------------------------------
+  # CI / verification
+  # ---------------------------------------------------------------------------
+
+  check:
+    desc: Run lint, tests, and build
+    deps: [lint, test, build]
+
+  # ---------------------------------------------------------------------------
+  # Deploy & install
+  # ---------------------------------------------------------------------------
+
+  deploy:
+    desc: Deploy to the Forge development environment
+    deps: [check]
+    cmds:
+      - forge deploy
+
+  deploy:staging:
+    desc: Deploy to the Forge staging environment
+    deps: [check]
+    cmds:
+      - forge deploy -e staging
+
+  deploy:production:
+    desc: Deploy to the Forge production environment
+    deps: [check]
+    prompt: Deploy to PRODUCTION — continue?
+    cmds:
+      - forge deploy -e production
+
+  install:forge:
+    desc: Install the Forge app onto a Jira site (SITE=your-site.atlassian.net)
+    requires:
+      vars: [SITE]
+    cmds:
+      - forge install --site {{.SITE}} --product jira
+
+  upgrade:forge:
+    desc: Upgrade the installed Forge app on a site (SITE=your-site.atlassian.net)
+    requires:
+      vars: [SITE]
+    cmds:
+      - forge install --upgrade --site {{.SITE}} --product jira
+
+  # ---------------------------------------------------------------------------
+  # Operations
+  # ---------------------------------------------------------------------------
+
+  logs:
+    desc: Tail Forge function logs
+    interactive: true
+    cmds:
+      - forge logs --tail
+
+  # ---------------------------------------------------------------------------
+  # Cleanup
+  # ---------------------------------------------------------------------------
+
+  clean:
+    desc: Remove build artifacts
+    cmds:
+      - rm -rf {{.PANEL_DIST}}
+
+  clean:all:
+    desc: Remove build artifacts and all node_modules
+    deps: [clean]
+    cmds:
+      - rm -rf node_modules {{.PANEL_DIR}}/node_modules
